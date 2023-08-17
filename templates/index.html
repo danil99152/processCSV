@@ -1,0 +1,28 @@
+<fieldset class="row">
+    <fieldset>
+        <legend>Загрузите файл</legend>
+        <label for="csv">Файл</label>
+        <input type="file" id="csv" name="csv"><br>
+    </fieldset>
+    <fieldset>
+        <button onclick="submit()">Отправить</button>
+    </fieldset>
+    <fieldset>
+        <label for='result'> Ответ: </label>
+        <fieldset id='result'></fieldset>
+        <br/>
+    </fieldset>
+</fieldset>
+<script type=text/javascript>
+    function submit() {
+        let formData = new FormData();
+        let csv = document.getElementById("csv").files[0];
+        formData.append('files', csv);
+        fetch(`/file`, {
+            method: "POST",
+            body: formData
+        }).then(response => response.json()).then(data => {
+            document.getElementById('result').innerHTML = data;
+        });
+    }
+</script>
