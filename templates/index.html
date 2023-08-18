@@ -2,27 +2,82 @@
     <fieldset>
         <legend>Загрузите файл</legend>
         <label for="csv">Файл</label>
-        <input type="file" id="csv" name="csv"><br>
+        <input type="file" id="csv" name="csv" accept=".csv"><br>
+    </fieldset>
+
+    <fieldset>
+        <label for='message'> Ответ: </label>
+        <fieldset id='message'></fieldset>
+        <br/>
     </fieldset>
     <fieldset>
         <button onclick="submit()">Отправить</button>
     </fieldset>
+
     <fieldset>
-        <label for='result'> Ответ: </label>
+        <label for='status'> Статус: </label>
+        <fieldset id='status'></fieldset>
+        <br/>
+    </fieldset>
+    <fieldset>
+        <button onclick="getStatus()">Получить статус</button>
+    </fieldset>
+
+    <fieldset>
+        <label for='result'> Статус: </label>
         <fieldset id='result'></fieldset>
         <br/>
+    </fieldset>
+    <fieldset>
+        <button onclick="getResult()">Получить результат</button>
     </fieldset>
 </fieldset>
 <script type=text/javascript>
     function submit() {
         let formData = new FormData();
         let csv = document.getElementById("csv").files[0];
-        formData.append('files', csv);
+        formData.append('file', csv);
         fetch(`/file`, {
             method: "POST",
             body: formData
         }).then(response => response.json()).then(data => {
-            document.getElementById('result').innerHTML = data;
+            console.log(data);
+            document.getElementById('message').innerHTML = data.message;
+        });
+    }
+    function getStatus(){
+        let fileName =  document.getElementById("csv").files[0].name;
+        fetch(`/file/${fileName}/status`, {
+            method: "GET"
+        }).then(response => response.json()).then(data => {
+            console.log(data);
+            document.getElementById('status').innerHTML = data;
+        });
+    }
+    function getResult(){
+        let fileName =  document.getElementById("csv").files[0].name;
+        fetch(`/file/${fileName}/result`, {
+            method: "GET"
+        }).then(response => response.json()).then(data => {
+            console.log(data);
+            if (typeof data === "string"){
+                let fieldset = `
+                    <fieldset>
+                      <fieldset>${data}</fieldset>
+                    </fieldset>
+                `
+                document.getElementById('result').innerHTML += fieldset;
+            }
+            else {
+                for (const [key, value] of Object.entries(data)) {
+                let fieldset = `
+                    <fieldset>
+                      <fieldset>${key}: ${JSON.stringify(value)}</fieldset>
+                    </fieldset>
+                `
+                document.getElementById('result').innerHTML += fieldset;
+                }
+            }
         });
     }
 </script>

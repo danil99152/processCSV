@@ -34,7 +34,7 @@ def process_file_background(file):
                              file_model.body)
         results.append(result)
 
-        time.sleep(1)  # limit to 7 requests per second
+        time.sleep(0.143)  # limit to 7 requests per second
 
     file_process_statuses[file.filename] = FileProcessStatus(status="complete", result=results)
 
@@ -58,9 +58,11 @@ async def get_file_status(filename: str) -> str:
 
 
 @router.get("/file/{filename}/result")
-async def get_file_result(filename: str) -> list[Result] | str:
+async def get_file_result(filename: str) -> list[Result | str] | str:
     if file_process_statuses.get(filename):
         result = file_process_statuses.get(filename)
+        if not result.result:
+            result.result = 'None'
         return result.result
     else:
         return "File doesn't exists"
