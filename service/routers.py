@@ -3,21 +3,17 @@ import time
 
 import requests
 from fastapi import File, UploadFile, BackgroundTasks, APIRouter
-from pydantic import BaseModel
+
+from service.models import FileModel, FileProcessStatus, Result
 
 router = APIRouter()
-
-
-class FileProcessStatus(BaseModel):
-    status: str
-    result: str = None
-
 
 file_process_statuses = {}
 
 
 @router.post("/file")
-async def process_file(file: UploadFile = File(default=None), background_tasks: BackgroundTasks = BackgroundTasks()):
+async def process_file(file: UploadFile = File(default=None), background_tasks: BackgroundTasks = BackgroundTasks()) \
+        -> dict:
     file_process_statuses[file.filename] = FileProcessStatus(status="processing")
 
     background_tasks.add_task(process_file_background, file)
@@ -31,19 +27,19 @@ def process_file_background(file):
     results = []
     reader = csv.DictReader(contents.decode('utf-8').splitlines())
     for row in reader:
-        user_id = row['userId']
-        title = row['title']
-        body = row['body']
+        file_model = FileModel(**row)
 
-        result = process_row(user_id, title, body)
+        result = process_row(file_model.userId,
+                             file_model.title,
+                             file_model.body)
         results.append(result)
 
-        time.sleep(0.143)  # limit to 7 requests per second
+        time.sleep(1)  # limit to 7 requests per second
 
     file_process_statuses[file.filename] = FileProcessStatus(status="complete", result=results)
 
 
-def process_row(user_id, title, body):
+def process_row(user_id: int, title: str, body: str) -> dict:
     try:
         response = requests.post("https://jsonplaceholder.typicode.com/posts",
                                  json={"userId": user_id, "title": title, "body": body})
@@ -54,10 +50,17 @@ def process_row(user_id, title, body):
 
 
 @router.get("/file/{filename}/status")
-async def get_file_status(filename):
-    return file_process_statuses.get(filename)
+async def get_file_status(filename: str) -> str:
+    if file_process_statuses.get(filename):
+        return file_process_statuses.get(filename).status
+    else:
+        return "File doesn't exists"
 
 
 @router.get("/file/{filename}/result")
-async def get_file_result(filename):
-    return file_process_statuses.get(filename).result
+async def get_file_result(filename: str) -> list[Result] | str:
+    if file_process_statuses.get(filename):
+        result = file_process_statuses.get(filename)
+        return result.result
+    else:
+        return "File doesn't exists"

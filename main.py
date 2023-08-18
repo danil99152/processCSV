@@ -9,7 +9,7 @@ from routers import services_router
 
 logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', encoding='utf-8', level=logging.DEBUG)
 
-app = FastAPI(docs_url='/api/', redoc_url=None, title=settings.APP_TITLE, version=settings.APP_VERSION,
+app = FastAPI(docs_url='/api/', redoc_url=None,
               swagger_ui_oauth2_redirect_url='/api/oauth2-redirect/')
 
 origins = ['*']
